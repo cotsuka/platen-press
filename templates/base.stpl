@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <% include!("head.stpl"); %>
+  </head>
+  <body>
+    <%- content %>
+  </body>
+</html>

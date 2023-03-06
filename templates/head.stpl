@@ -1,0 +1,10 @@
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="X-UA-Compatible" content="ie=edge" />
+<title><%= title %></title>
+<link rel="stylesheet" href="public/reset.css" />
+<link rel="stylesheet" href="public/style.css" />
+<link rel="me" href="https://github.com/cotsuka" />
+<link rel="me" href="https://mastodon.social/@cameronotsuka" />
+<link rel="me" href="https://twitter.com/CameronOtsuka" />
+<link rel="me" href="https://www.linkedin.com/in/cotsuka" />
