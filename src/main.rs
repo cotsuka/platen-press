@@ -2,11 +2,8 @@ use futures::{
     channel::mpsc::{channel, Receiver},
     SinkExt, StreamExt,
 };
-use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher, Config};
-use std::{
-    collections::HashMap,
-    path::Path
-};
+use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
+use std::{collections::HashMap, path::Path};
 
 mod templates;
 
@@ -18,7 +15,7 @@ fn main() {
     let watch_paths: HashMap<&str, &Path> = HashMap::from([
         ("content", content_dir),
         ("public", public_dir),
-        ("template", template_dir)
+        ("template", template_dir),
     ]);
     match templates::build(&watch_paths) {
         Err(e) => println!("{:?}", e),
@@ -36,11 +33,14 @@ fn async_watcher() -> notify::Result<(RecommendedWatcher, Receiver<notify::Resul
     let (mut tx, rx) = channel(1);
 
     // Automatically select the best implementation for the platform.
-    let watcher = RecommendedWatcher::new(move |res| {
-        futures::executor::block_on(async {
-            tx.send(res).await.unwrap();
-        })
-    }, Config::default())?;
+    let watcher = RecommendedWatcher::new(
+        move |res| {
+            futures::executor::block_on(async {
+                tx.send(res).await.unwrap();
+            })
+        },
+        Config::default(),
+    )?;
 
     Ok((watcher, rx))
 }

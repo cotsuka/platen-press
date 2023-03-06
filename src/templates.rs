@@ -1,20 +1,13 @@
 use pulldown_cmark;
 use sailfish::TemplateOnce;
-use std::{
-    collections::HashMap,
-    ffi::OsStr,
-    fs,
-    io::prelude::*,
-    io::Result,
-    path::Path
-};
+use std::{collections::HashMap, ffi::OsStr, fs, io::prelude::*, io::Result, path::Path};
 use walkdir::{DirEntry, WalkDir};
 
 #[derive(TemplateOnce)]
 #[template(path = "base.stpl")]
 struct BaseTemplate {
     title: String,
-    content: String
+    content: String,
 }
 
 pub fn build(watch_paths: &HashMap<&str, &Path>) -> Result<()> {
@@ -22,7 +15,7 @@ pub fn build(watch_paths: &HashMap<&str, &Path>) -> Result<()> {
     let _ = fs::remove_dir_all(output_dir);
 
     println!("building...");
-    
+
     let content_dir = watch_paths.get(&"content").unwrap();
     build_posts(&content_dir, output_dir)?;
     println!("done building!");
@@ -35,7 +28,7 @@ fn build_posts(content_dir: &Path, output_dir: &Path) -> Result<()> {
         .follow_links(true)
         .into_iter()
         .filter_map(|e| e.ok());
-    
+
     let markdown_files: Vec<DirEntry> = content_walker
         .filter(|e| e.path().extension() == Some(md_extension))
         .collect();
@@ -67,5 +60,5 @@ fn build_posts(content_dir: &Path, output_dir: &Path) -> Result<()> {
             Err(_) => println!("error stripping prefix from markdown file!"),
         }
     }
-Ok(())
+    Ok(())
 }
