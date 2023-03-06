@@ -17,14 +17,36 @@ pub fn build(watch_paths: &HashMap<&str, &Path>) -> Result<()> {
     println!("building...");
 
     let content_dir = watch_paths.get(&"content").unwrap();
+    let public_dir = watch_paths.get(&"public").unwrap();
+    copy_public(&public_dir, output_dir)?;
     build_posts(&content_dir, output_dir)?;
+    build_pages(&content_dir, output_dir)?;
     println!("done building!");
+    Ok(())
+}
+
+fn copy_public(public_dir: &Path, output_dir: &Path) -> Result<()> {
+    let content_walker = WalkDir::new(public_dir)
+        .follow_links(true)
+        .into_iter()
+        .filter_map(|e| e.ok());
+
+    let copy_files: Vec<DirEntry> = content_walker
+        .filter(|e| e.path().is_file())
+        .collect();
+
+    for file in &copy_files {
+        let copied_file = output_dir.join(file.path());
+        let parent_folder = Path::new(&copied_file).parent().unwrap();
+        fs::create_dir_all(parent_folder)?;
+        fs::copy(file.path(), copied_file)?;
+    }
     Ok(())
 }
 
 fn build_posts(content_dir: &Path, output_dir: &Path) -> Result<()> {
     let md_extension = OsStr::new("md");
-    let content_walker = WalkDir::new(content_dir)
+    let content_walker = WalkDir::new(content_dir.join("posts"))
         .follow_links(true)
         .into_iter()
         .filter_map(|e| e.ok());
@@ -54,6 +76,45 @@ fn build_posts(content_dir: &Path, output_dir: &Path) -> Result<()> {
                 let html_file = output_dir.join(markdown_file).with_extension("html");
                 let parent_folder = Path::new(&html_file).parent().unwrap();
                 fs::create_dir_all(parent_folder)?;
+                fs::write(&html_file, html_content)?;
+                html_files.push(html_file);
+            }
+            Err(_) => println!("error stripping prefix from markdown file!"),
+        }
+    }
+    Ok(())
+}
+
+fn build_pages(content_dir: &Path, output_dir: &Path) -> Result<()> {
+    let md_extension = OsStr::new("md");
+    let content_walker = WalkDir::new(content_dir.join("pages"))
+        .follow_links(true)
+        .into_iter()
+        .filter_map(|e| e.ok());
+
+    let markdown_files: Vec<DirEntry> = content_walker
+        .filter(|e| e.path().extension() == Some(md_extension))
+        .collect();
+    let mut html_files = Vec::with_capacity(markdown_files.len());
+
+    for file in &markdown_files {
+        let mut open_file = fs::File::open(file.path())?;
+        let mut file_contents = String::new();
+        open_file.read_to_string(&mut file_contents)?;
+
+        let parser = pulldown_cmark::Parser::new(&file_contents);
+        let mut parsed_content = String::new();
+        pulldown_cmark::html::push_html(&mut parsed_content, parser);
+
+        let ctx = BaseTemplate {
+            title: String::from("Cameron Otsuka"),
+            content: parsed_content,
+        };
+        let html_content = ctx.render_once().unwrap();
+
+        match file.path().strip_prefix(content_dir) {
+            Ok(markdown_file) => {
+                let html_file = output_dir.join(Path::new(markdown_file.file_name().unwrap())).with_extension("html");
                 fs::write(&html_file, html_content)?;
                 html_files.push(html_file);
             }
